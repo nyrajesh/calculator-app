@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Text Formatter</title>
+    <title>Smart Formatter & Paraphraser</title>
     <style>
         :root {
             --primary: #2563eb;
+            --secondary: #7c3aed;
             --bg: #f8fafc;
             --text: #1e293b;
             --border: #cbd5e1;
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -26,11 +27,11 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             background: white;
             padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         .workspace {
@@ -43,58 +44,77 @@
 
         textarea {
             width: 100%;
-            height: 300px;
-            padding: 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            height: 320px;
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 1rem;
             font-size: 1rem;
             line-height: 1.6;
             resize: none;
             box-sizing: border-box;
             outline: none;
+            transition: all 0.2s;
         }
 
-        textarea:focus { border-color: var(--primary); }
+        textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
 
+        /* The Generate Arrow */
         .btn-gen {
             background: var(--primary);
             color: white;
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-gen:hover { transform: scale(1.1) rotate(5deg); }
+        .btn-gen:active { transform: scale(0.9); }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button.action-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             transition: 0.2s;
         }
 
-        .btn-gen:hover { transform: scale(1.1); background: #1d4ed8; }
+        .btn-paraphrase { background: var(--secondary); color: white; }
+        .btn-paraphrase:hover { background: #6d28d9; }
+
+        .btn-copy { background: white; border: 2px solid var(--border) !important; color: var(--text); }
+        .btn-copy:hover { background: #f1f5f9; }
 
         .status-bar {
+            margin-top: 25px;
             padding: 12px;
             background: #f1f5f9;
-            border-radius: 6px;
+            border-radius: 12px;
             text-align: center;
             font-size: 0.9rem;
             font-weight: 600;
             color: #475569;
         }
 
-        .controls { text-align: center; margin-top: 15px; }
-
-        .btn-copy {
-            padding: 10px 20px;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        @media (max-width: 700px) {
+        @media (max-width: 800px) {
             .workspace { grid-template-columns: 1fr; }
             .btn-gen { transform: rotate(90deg); margin: 10px auto; }
         }
@@ -103,83 +123,118 @@
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; margin:0; color: var(--primary);">Text Formatter</h2>
-    <p style="text-align:center; margin-top:5px; color:#64748b;">Clean and Professional Punctuation</p>
+    <h2 style="text-align:center; margin:0; color: var(--primary);">Smart Text Hub</h2>
+    <p style="text-align:center; color:#64748b; margin-top:5px;">Format, Fix, and Paraphrase Offline</p>
     
     <div class="workspace">
-        <textarea id="input" placeholder="type lowercase text here... (e.g. i live in paris. it's great)"></textarea>
+        <textarea id="input" placeholder="Type here... (e.g. i am very happy to help you with this difficult task)"></textarea>
         
-        <button id="btn" class="btn-gen" onclick="formatText()">➔</button>
+        <button id="btn" class="btn-gen" onclick="handleFormat()" title="Format & Fix">➔</button>
         
-        <textarea id="output" readonly placeholder="Result..."></textarea>
+        <textarea id="output" readonly placeholder="Your result will appear here..."></textarea>
     </div>
 
     <div class="controls">
-        <button class="btn-copy" onclick="copyText()">Copy to Clipboard</button>
+        <button class="action-btn btn-paraphrase" onclick="handleParaphrase()">
+            <span>♻️</span> Regenerate / Paraphrase
+        </button>
+        <button class="action-btn btn-copy" onclick="copyText()">
+            <span>📋</span> Copy Result
+        </button>
     </div>
 
-    <p class="status-bar" id="status">System Ready (Pure JS Mode)</p>
+    <p class="status-bar" id="status">System Ready</p>
 </div>
 
 <script>
-    function formatText() {
-        const input = document.getElementById('input').value;
+    // Local Synonym Dictionary for Offline Paraphrasing
+    const synonyms = {
+        "happy": ["delighted", "pleased", "glad", "joyful"],
+        "sad": ["unhappy", "sorrowful", "dejected"],
+        "good": ["excellent", "superb", "great", "positive"],
+        "bad": ["poor", "substandard", "unpleasant"],
+        "very": ["extremely", "exceptionally", "highly"],
+        "help": ["assist", "support", "aid"],
+        "difficult": ["challenging", "complex", "tough"],
+        "fast": ["quick", "rapid", "speedy"],
+        "small": ["tiny", "minimal", "compact"],
+        "big": ["large", "massive", "substantial"],
+        "start": ["begin", "commence", "initiate"],
+        "stop": ["cease", "terminate", "halt"],
+        "use": ["utilize", "employ"],
+        "change": ["modify", "alter", "adjust"]
+    };
+
+    function updateStatus(msg, color = "#475569") {
         const status = document.getElementById('status');
-        
-        if (!input.trim()) {
-            status.innerText = "⚠️ Please enter some text first.";
-            status.style.color = "orange";
-            return;
-        }
+        status.innerText = msg;
+        status.style.color = color;
+    }
 
-        try {
-            let text = input;
+    // CORE FUNCTION 1: CLEANING & FORMATTING
+    function handleFormat() {
+        let text = document.getElementById('input').value.trim();
+        if (!text) return updateStatus("⚠️ Please enter text first", "orange");
 
-            // 1. Fix double spaces and trim
-            text = text.replace(/\s+/g, ' ').trim();
+        // 1. Basic cleaning
+        text = text.replace(/\s+/g, ' '); 
+        // 2. Capitalize first letter
+        text = text.charAt(0).toUpperCase() + text.slice(1);
+        // 3. Fix lowercase "i"
+        text = text.replace(/\bi\b/g, 'I');
+        // 4. Capitalize sentences
+        text = text.replace(/([.!?]\s+)([a-z])/g, (m, s, l) => s + l.toUpperCase());
+        // 5. Fix punctuation spacing
+        text = text.replace(/\s+([.,!?])/g, '$1');
+        // 6. Ensure ending period
+        if (!/[.!?]$/.test(text)) text += ".";
 
-            // 2. Capitalize the first letter of the entire block
-            text = text.charAt(0).toUpperCase() + text.slice(1);
+        document.getElementById('output').value = text;
+        updateStatus("✅ Text Formatted & Punctuation Fixed!", "green");
+    }
 
-            // 3. Capitalize the first letter of every sentence
-            // Looks for a period, exclamation, or question mark followed by a space and a letter
-            text = text.replace(/([.!?]\s+)([a-z])/g, function(match, separator, letter) {
-                return separator + letter.toUpperCase();
-            });
+    // CORE FUNCTION 2: PARAPHRASING (Synonym Swapping)
+    function handleParaphrase() {
+        let text = document.getElementById('output').value || document.getElementById('input').value;
+        if (!text.trim()) return updateStatus("⚠️ No text found to paraphrase", "orange");
 
-            // 4. Fix lowercase "i" (e.g., "i am" -> "I am")
-            // \bi\b ensures we only change the word "i", not the "i" inside "like"
-            text = text.replace(/\bi\b/g, 'I');
+        let words = text.split(' ');
+        let changedCount = 0;
 
-            // 5. Fix spacing around punctuation
-            text = text.replace(/\s+([.,!?])/g, '$1'); // "hello ." -> "hello."
+        let newWords = words.map(word => {
+            // Clean word from punctuation for matching
+            let cleanWord = word.toLowerCase().replace(/[.,!?]/g, "");
+            let punctuation = word.slice(cleanWord.length); 
 
-            // 6. Ensure the text ends with a period if it doesn't have punctuation
-            if (!/[.!?]$/.test(text)) {
-                text += ".";
+            if (synonyms[cleanWord]) {
+                let options = synonyms[cleanWord];
+                // Pick a random synonym from the list
+                let choice = options[Math.floor(Math.random() * options.length)];
+                changedCount++;
+                // Match original capitalization
+                if (word[0] === word[0].toUpperCase()) {
+                    choice = choice.charAt(0).toUpperCase() + choice.slice(1);
+                }
+                return choice + punctuation;
             }
+            return word;
+        });
 
-            document.getElementById('output').value = text;
-            status.innerText = "✅ Formatting Successful!";
-            status.style.color = "green";
-
-        } catch (error) {
-            status.innerText = "❌ Error: " + error.message;
-            status.style.color = "red";
+        document.getElementById('output').value = newWords.join(' ');
+        
+        if(changedCount > 0) {
+            updateStatus(`♻️ Paraphrased! Changed ${changedCount} words with synonyms.`, "#7c3aed");
+        } else {
+            updateStatus("ℹ️ Formatted, but no common words found to paraphrase.", "#2563eb");
         }
     }
 
     function copyText() {
         const output = document.getElementById('output').value;
-        const status = document.getElementById('status');
         if (!output) return;
-
         navigator.clipboard.writeText(output).then(() => {
-            status.innerText = "📋 Copied to clipboard!";
-            setTimeout(() => {
-                status.innerText = "System Ready (Pure JS Mode)";
-                status.style.color = "#475569";
-            }, 2000);
+            updateStatus("📋 Copied to clipboard!", "green");
+            setTimeout(() => updateStatus("System Ready"), 2000);
         });
     }
 </script>
