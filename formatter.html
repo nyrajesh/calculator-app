@@ -3,148 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Formatter (Local LLM)</title>
+    <title>AI Smart Hub</title>
     <style>
-        :root { --primary: #2563eb; --secondary: #7c3aed; --bg: #f8fafc; --text: #1e293b; --border: #cbd5e1; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; --border: #cbd5e1; }
         body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 1100px; background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .container { width: 100%; max-width: 1000px; background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         
-        .header { text-align: center; margin-bottom: 2rem; }
-        .header h1 { margin: 0; color: var(--primary); }
-        
-        /* Model Loader UI */
-        #loader { background: #eff6ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid #bfdbfe; }
-        .progress-container { width: 100%; background: #d1d5db; height: 10px; border-radius: 5px; margin-top: 10px; overflow: hidden; display: none; }
-        #progress-bar { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s; }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+
+        /* Status UI */
+        #status-area { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-size: 0.85rem; font-weight: 600; }
+        .loader-bar { width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; display: none; }
+        #progress { width: 0%; height: 100%; background: var(--primary); transition: width 0.2s; }
 
         .workspace { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; }
-        textarea { width: 100%; height: 350px; padding: 1.2rem; border: 2px solid var(--border); border-radius: 1rem; font-size: 1rem; resize: none; box-sizing: border-box; outline: none; }
-        textarea:focus { border-color: var(--primary); }
+        textarea { width: 100%; height: 350px; padding: 1.2rem; border: 2px solid var(--border); border-radius: 1rem; font-size: 1rem; line-height: 1.6; resize: none; box-sizing: border-box; outline: none; transition: 0.2s; }
+        textarea:focus { border-color: var(--primary); background: #fff; }
 
-        .btn-gen { background: var(--primary); color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.8rem; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
-        .btn-gen:disabled { background: #cbd5e1; cursor: not-allowed; }
+        /* The Smart Arrow Button */
+        .btn-main {
+            background: #94a3b8; /* Gray until AI is ready */
+            color: white;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            cursor: not-allowed;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-main.ready { background: var(--primary); cursor: pointer; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
+        .btn-main.ready:hover { transform: scale(1.1) rotate(10deg); }
+        .btn-main.loading { animation: pulse 1.5s infinite; opacity: 0.7; pointer-events: none; }
 
-        .controls { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        button.action-btn { padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
-        .btn-ai { background: var(--secondary); }
-        .btn-ai:disabled { opacity: 0.5; }
-        .btn-copy { background: #64748b; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-        @media (max-width: 800px) { .workspace { grid-template-columns: 1fr; } .btn-gen { transform: rotate(90deg); margin: 10px auto; } }
+        .controls { text-align: center; margin-top: 20px; }
+        .btn-copy { padding: 12px 24px; background: white; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 600; }
+
+        @media (max-width: 800px) { .workspace { grid-template-columns: 1fr; } .btn-main { transform: rotate(90deg); margin: 10px auto; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>AI Smart Formatter</h1>
-        <p>Running a Local LLM (T5) inside your browser</p>
-    </div>
+    <header>
+        <h1>Smart AI Formatter</h1>
+    </header>
 
-    <!-- Loading UI -->
-    <div id="loader">
-        <span id="status-text">Checking AI Model...</span>
-        <div class="progress-container" id="progress-cont">
-            <div id="progress-bar"></div>
+    <div id="status-area">
+        <span id="status-text">⏳ Loading AI Engine...</span>
+        <div class="loader-bar" id="loader-bar">
+            <div id="progress"></div>
         </div>
     </div>
-    
+
     <div class="workspace">
-        <textarea id="input" placeholder="Enter text to paraphrase..."></textarea>
-        <button id="btn-fix" class="btn-gen" onclick="basicFix()" title="Fast Fix">➔</button>
-        <textarea id="output" readonly placeholder="AI Result..."></textarea>
+        <textarea id="input" placeholder="Type or paste your text here..."></textarea>
+        
+        <button id="main-btn" class="btn-main" onclick="processAI()" disabled>➔</button>
+        
+        <textarea id="output" readonly placeholder="AI result will appear here..."></textarea>
     </div>
 
     <div class="controls">
-        <button id="btn-ai" class="action-btn btn-ai" onclick="paraphraseAI()" disabled>
-            ✨ AI Paraphrase (Local LLM)
-        </button>
-        <button class="action-btn btn-copy" onclick="copyText()">📋 Copy Result</button>
+        <button class="btn-copy" onclick="copyText()">Copy Result</button>
     </div>
 </div>
 
-<!-- Import Transformers.js as a Module -->
 <script type="module">
     import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
 
-    let paraphraser;
+    let generator;
+    const btn = document.getElementById('main-btn');
     const statusText = document.getElementById('status-text');
-    const progressBar = document.getElementById('progress-bar');
-    const progressCont = document.getElementById('progress-cont');
-    const aiBtn = document.getElementById('btn-ai');
+    const progress = document.getElementById('progress');
+    const loaderBar = document.getElementById('loader-bar');
 
-    async function initAI() {
+    async function init() {
         try {
-            statusText.innerText = "Initializing AI Engine (First time takes 1-2 mins)...";
-            progressCont.style.display = "block";
-
-            // Initialize the paraphrasing pipeline with T5-small
-            paraphraser = await pipeline('text2text-generation', 'Xenova/t5-small', {
-                progress_callback: (data) => {
-                    if (data.status === 'progress') {
-                        progressBar.style.width = `${data.progress}%`;
+            loaderBar.style.display = 'block';
+            generator = await pipeline('text2text-generation', 'Xenova/t5-small', {
+                progress_callback: (p) => {
+                    if (p.status === 'progress') {
+                        progress.style.width = p.progress + '%';
                     }
                 }
             });
-
-            statusText.innerText = "✅ AI Engine Ready (Offline Mode)";
-            aiBtn.disabled = false;
-            setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 3000);
+            statusText.innerText = "✅ AI Ready. Click the arrow to paraphrase.";
+            btn.classList.add('ready');
+            btn.disabled = false;
+            loaderBar.style.display = 'none';
         } catch (e) {
-            statusText.innerText = "❌ Error loading AI. Try refreshing.";
-            console.error(e);
+            statusText.innerText = "❌ Error loading AI model.";
         }
     }
 
-    // Attach function to window so the buttons can see it
-    window.paraphraseAI = async function() {
-        const input = document.getElementById('input').value;
-        if (!input) return;
+    window.processAI = async function() {
+        const inputText = document.getElementById('input').value.trim();
+        if (!inputText) return;
 
-        aiBtn.disabled = true;
-        aiBtn.innerText = "🤖 Thinking...";
-        
+        btn.classList.add('loading');
+        statusText.innerText = "🤖 AI is thinking...";
+
         try {
-            // "paraphrase: " is a specific prompt prefix for the T5 model
-            const output = await paraphraser(`paraphrase: ${input}`, {
+            // "paraphrase: " is the prompt for T5.
+            // temperature and do_sample allow for different results on each click.
+            const result = await generator(`paraphrase: ${inputText}`, {
                 max_new_tokens: 128,
-                repetition_penalty: 2.0,
-                no_repeat_ngram_size: 3,
+                do_sample: true,       // Pick different words each time
+                temperature: 0.8,      // Adds "creativity"
+                top_k: 50,             // Keeps it sensible
+                repetition_penalty: 2.0
             });
 
-            document.getElementById('output').value = output[0].generated_text;
-            statusText.innerText = "✨ AI Paraphrasing Complete";
-        } catch (e) {
-            alert("AI Error: " + e.message);
-        }
-        
-        aiBtn.disabled = false;
-        aiBtn.innerText = "✨ AI Paraphrase (Local LLM)";
-    }
+            let outputText = result[0].generated_text;
 
-    // Load AI on page load
-    initApp();
-    async function initApp() {
-        await initAI();
-    }
+            // CLEANUP: Ensure the output doesn't start with the word "paraphrase"
+            // and fix basic capitalization.
+            outputText = outputText.replace(/^paraphrase:\s*/i, "");
+            outputText = outputText.charAt(0).toUpperCase() + outputText.slice(1);
+            
+            // Standard grammar cleanup for the AI output
+            if (outputText && !/[.!?]$/.test(outputText)) outputText += ".";
+
+            document.getElementById('output').value = outputText;
+            statusText.innerText = "✨ Done! Click again for a different version.";
+        } catch (e) {
+            statusText.innerText = "❌ AI Error occurred.";
+        }
+
+        btn.classList.remove('loading');
+    };
+
+    init();
 </script>
 
 <script>
-    // Traditional fast cleanup (Non-AI)
-    function basicFix() {
-        let text = document.getElementById('input').value;
-        text = text.trim().replace(/\s+/g, ' ');
-        text = text.charAt(0).toUpperCase() + text.slice(1);
-        text = text.replace(/\bi\b/g, 'I');
-        text = text.replace(/([.!?]\s+)([a-z])/g, (m, s, l) => s + l.toUpperCase());
-        if (text && !/[.!?]$/.test(text)) text += ".";
-        document.getElementById('output').value = text;
-    }
-
     function copyText() {
         const out = document.getElementById('output');
+        if (!out.value) return;
         navigator.clipboard.writeText(out.value);
-        alert("Copied!");
+        alert("Copied to clipboard!");
     }
 </script>
 
