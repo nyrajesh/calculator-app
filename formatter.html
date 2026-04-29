@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Formatter & Grammar Fixer</title>
+    <!-- Library: Compromise.js (Offline capable after first load) -->
+    <script src="https://unpkg.com/compromise"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        header p {
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #475569;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea[readonly] {
+            background-color: #f1f5f9;
+            cursor: default;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        .status-msg {
+            font-size: 0.8rem;
+            margin-top: 10px;
+            text-align: center;
+            color: #059669;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Text Formatter</h1>
+        <p>Auto-fix capitalization, punctuation, and formatting</p>
+    </header>
+
+    <div class="workspace">
+        <div class="column">
+            <label for="input-text">Input Raw Text</label>
+            <textarea id="input-text" placeholder="type or paste text here (e.g. i live in london. it's great!...)"></textarea>
+        </div>
+        
+        <div class="column">
+            <label for="output-text">Formatted Result</label>
+            <textarea id="output-text" readonly placeholder="Result will appear here..."></textarea>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-primary" onclick="formatText()">
+            Regenerate & Fix
+        </button>
+        <button class="btn-outline" onclick="copyToClipboard()">
+            Copy to Clipboard
+        </button>
+    </div>
+    
+    <div id="status" class="status-msg">Copied to clipboard!</div>
+</div>
+
+<script>
+    function formatText() {
+        const input = document.getElementById('input-text').value;
+        if (!input.trim()) return;
+
+        // Using Compromise (nlp) to process text
+        let doc = nlp(input);
+
+        // 1. Capitalize sentences
+        doc.sentences().capitalize();
+        
+        // 2. Fix basic whitespace and punctuation
+        // Note: .normalize() handles common spacing and contraction issues
+        doc.normalize();
+
+        // 3. Get text back
+        let result = doc.text();
+
+        // Extra Manual Cleanup: Ensure there is a space after every period if missing
+        result = result.replace(/\.([a-zA-Z])/g, '. $1');
+
+        document.getElementById('output-text').value = result;
+    }
+
+    function copyToClipboard() {
+        const output = document.getElementById('output-text');
+        if (!output.value) return;
+
+        navigator.clipboard.writeText(output.value).then(() => {
+            const status = document.getElementById('status');
+            status.style.opacity = '1';
+            setTimeout(() => {
+                status.style.opacity = '0';
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
