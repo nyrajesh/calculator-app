@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Formatter & Grammar Fixer</title>
-    <!-- Library: Compromise.js (Offline capable after first load) -->
-    <script src="https://unpkg.com/compromise"></script>
+    <title>Professional Text Formatter</title>
+    <!-- Library: Compromise.js -->
+    <script src="https://unpkg.com/compromise@latest/builds/compromise.min.js"></script>
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --border-color: #e2e8f0;
+            --primary: #2563eb;
+            --success: #059669;
+            --error: #dc2626;
+            --bg: #f1f5f9;
+            --border: #cbd5e1;
+            --text: #1e293b;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
@@ -30,126 +30,111 @@
 
         .container {
             width: 100%;
-            max-width: 1000px;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 1100px;
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        header { text-align: center; margin-bottom: 2rem; }
+        header h1 { margin: 0; color: var(--primary); font-size: 1.75rem; }
 
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            color: var(--primary-color);
-        }
-
-        header p {
-            color: #64748b;
-            margin-top: 5px;
-        }
-
+        /* The Grid Layout */
         .workspace {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
             gap: 20px;
         }
 
-        @media (max-width: 768px) {
-            .workspace {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .column {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #475569;
-        }
+        .column { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 600; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
 
         textarea {
             width: 100%;
-            height: 300px;
-            padding: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            height: 350px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
             font-size: 1rem;
-            line-height: 1.5;
+            line-height: 1.6;
             resize: none;
             box-sizing: border-box;
             outline: none;
-            transition: border 0.2s;
-        }
-
-        textarea:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        textarea[readonly] {
-            background-color: #f1f5f9;
-            cursor: default;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 500;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
             transition: all 0.2s;
+        }
+
+        textarea:focus { border-color: var(--primary); ring: 3px rgba(37, 99, 235, 0.1); }
+
+        /* The Middle Arrow Button */
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-generate {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
+        .btn-generate:hover { 
+            background: #1d4ed8; 
+            transform: scale(1.1);
         }
 
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
+        .btn-generate:active { transform: scale(0.95); }
 
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-        .btn-outline:hover {
-            background-color: #f1f5f9;
-        }
-
-        .status-msg {
-            font-size: 0.8rem;
-            margin-top: 10px;
+        /* Status Area */
+        .status-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: #f8fafc;
+            border: 1px solid var(--border);
             text-align: center;
-            color: #059669;
-            height: 20px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            min-height: 24px;
+        }
+
+        .status-text { font-weight: 500; font-size: 0.95rem; }
+        .success { color: var(--success); }
+        .error { color: var(--error); }
+        .neutral { color: #64748b; }
+
+        .copy-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .btn-copy {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-copy:hover { background: #f1f5f9; }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 768px) {
+            .workspace { grid-template-columns: 1fr; }
+            .arrow-container { transform: rotate(90deg); margin: 10px 0; align-items: center; }
+            textarea { height: 200px; }
         }
     </style>
 </head>
@@ -157,67 +142,104 @@
 
 <div class="container">
     <header>
-        <h1>Text Formatter</h1>
-        <p>Auto-fix capitalization, punctuation, and formatting</p>
+        <h1>Smart Text Formatter</h1>
     </header>
 
     <div class="workspace">
+        <!-- LEFT PANE -->
         <div class="column">
-            <label for="input-text">Input Raw Text</label>
-            <textarea id="input-text" placeholder="type or paste text here (e.g. i live in london. it's great!...)"></textarea>
+            <label>Raw Input</label>
+            <textarea id="input-text" placeholder="i live in paris. it's beautiful."></textarea>
         </div>
-        
+
+        <!-- CENTER ARROW -->
+        <div class="arrow-container">
+            <button class="btn-generate" onclick="processText()" title="Click to Format">
+                ➔
+            </button>
+        </div>
+
+        <!-- RIGHT PANE -->
         <div class="column">
-            <label for="output-text">Formatted Result</label>
+            <label>Formatted Result</label>
             <textarea id="output-text" readonly placeholder="Result will appear here..."></textarea>
         </div>
     </div>
 
-    <div class="controls">
-        <button class="btn-primary" onclick="formatText()">
-            Regenerate & Fix
-        </button>
-        <button class="btn-outline" onclick="copyToClipboard()">
-            Copy to Clipboard
-        </button>
+    <div class="copy-area">
+        <button class="btn-copy" onclick="copyResult()">Copy Result to Clipboard</button>
     </div>
-    
-    <div id="status" class="status-msg">Copied to clipboard!</div>
+
+    <!-- BOTTOM STATUS AREA -->
+    <div class="status-box">
+        <span id="status-msg" class="status-text neutral">System Ready</span>
+    </div>
 </div>
 
 <script>
-    function formatText() {
-        const input = document.getElementById('input-text').value;
-        if (!input.trim()) return;
+    const statusEl = document.getElementById('status-msg');
+    const inputEl = document.getElementById('input-text');
+    const outputEl = document.getElementById('output-text');
 
-        // Using Compromise (nlp) to process text
-        let doc = nlp(input);
-
-        // 1. Capitalize sentences
-        doc.sentences().capitalize();
-        
-        // 2. Fix basic whitespace and punctuation
-        // Note: .normalize() handles common spacing and contraction issues
-        doc.normalize();
-
-        // 3. Get text back
-        let result = doc.text();
-
-        // Extra Manual Cleanup: Ensure there is a space after every period if missing
-        result = result.replace(/\.([a-zA-Z])/g, '. $1');
-
-        document.getElementById('output-text').value = result;
+    function updateStatus(msg, type) {
+        statusEl.innerText = msg;
+        statusEl.className = 'status-text ' + type;
     }
 
-    function copyToClipboard() {
-        const output = document.getElementById('output-text');
-        if (!output.value) return;
+    function processText() {
+        const text = inputEl.value.trim();
 
-        navigator.clipboard.writeText(output.value).then(() => {
-            const status = document.getElementById('status');
-            status.style.opacity = '1';
+        // 1. Validation
+        if (!text) {
+            updateStatus("⚠️ Error: Please enter some text first.", "error");
+            return;
+        }
+
+        // 2. Library Check
+        if (typeof nlp === 'undefined') {
+            updateStatus("⏳ Error: Library still loading. Try again in 2 seconds.", "error");
+            return;
+        }
+
+        try {
+            updateStatus("⚙️ Processing...", "neutral");
+            
+            // 3. Transformation Logic
+            let doc = nlp(text);
+            
+            doc.sentences().capitalize(); // Capitalize starts of sentences
+            doc.normalize();              // Fix whitespace and punctuation
+            
+            let result = doc.text();
+
+            // Force a period at the end if missing
+            if (result && !/[.!?]$/.test(result)) {
+                result += ".";
+            }
+
+            outputEl.value = result;
+            updateStatus("✅ Success: Text formatted and grammar improved!", "success");
+        } catch (err) {
+            console.error(err);
+            updateStatus("❌ Critical Error: Failed to process text.", "error");
+        }
+    }
+
+    function copyResult() {
+        if (!outputEl.value) {
+            updateStatus("⚠️ Nothing to copy!", "error");
+            return;
+        }
+        navigator.clipboard.writeText(outputEl.value).then(() => {
+            const oldMsg = statusEl.innerText;
+            const oldClass = statusEl.className;
+            
+            updateStatus("📋 Copied to clipboard!", "success");
+            
+            // Revert status after 2 seconds
             setTimeout(() => {
-                status.style.opacity = '0';
+                statusEl.innerText = oldMsg;
+                statusEl.className = oldClass;
             }, 2000);
         });
     }
